@@ -6,5 +6,7 @@ import * as schema from "./schema";
 config({ path: ".env" });
 config({ path: ".env.local", override: true });
 
-const sql = neon(process.env.DATABASE_URL!);
+const databaseUrl =
+  process.env.DATABASE_URL ?? process.env.NETLIFY_DATABASE_URL;
+const sql = neon(databaseUrl!);
 export const db = drizzle({ client: sql, schema });
