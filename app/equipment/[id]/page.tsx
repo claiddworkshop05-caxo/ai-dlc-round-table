@@ -6,6 +6,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { Button } from "@/components/ui/button";
 import { QrCode } from "@/components/qr-code";
+import { DeleteButton } from "@/components/delete-button";
 import { equipment, loans } from "@/src/schema";
 
 export const dynamic = "force-dynamic";
@@ -87,6 +88,7 @@ export default async function EquipmentDetailPage({
               {item.status === "available" ? "貸出する" : "返却する"}
             </Button>
           </Link>
+          <DeleteButton equipmentId={item.id} />
         </CardContent>
       </Card>
 

@@ -73,3 +73,14 @@ export async function returnEquipment(
   revalidatePath("/");
   revalidatePath("/loans");
 }
+
+export async function deleteEquipment(equipmentId: number) {
+  const { db } = await import("@/src/db");
+
+  // 関連する貸出履歴を先に削除
+  await db.delete(loans).where(eq(loans.equipmentId, equipmentId));
+  await db.delete(equipment).where(eq(equipment.id, equipmentId));
+
+  revalidatePath("/");
+  revalidatePath("/loans");
+}
