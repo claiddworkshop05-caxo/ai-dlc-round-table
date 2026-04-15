@@ -1,100 +1,68 @@
-import { revalidatePath } from "next/cache";
 import { desc } from "drizzle-orm";
-import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
-import { comments } from "@/src/schema";
+import Link from "next/link";
+import { Card, CardContent } from "@/components/ui/card";
+import { equipment } from "@/src/schema";
 
 export const dynamic = "force-dynamic";
 
-async function getComments() {
+async function getEquipmentList() {
   const { db } = await import("@/src/db");
-  return db.select().from(comments).orderBy(desc(comments.createdAt));
+  return db.select().from(equipment).orderBy(desc(equipment.createdAt));
 }
 
 export default async function Page() {
-  const list = await getComments();
-
-  async function create(formData: FormData) {
-    "use server";
-    const { db } = await import("@/src/db");
-    const comment = formData.get("comment");
-    if (typeof comment !== "string" || comment.trim() === "") {
-      return;
-    }
-    await db.insert(comments).values({ comment });
-    revalidatePath("/");
-  }
+  const list = await getEquipmentList();
 
   return (
-    <div className="flex min-h-full flex-1 flex-col items-center justify-center bg-muted/40 px-4 py-16">
-      <Card className="w-full max-w-md shadow-md">
-        <CardHeader>
-          <CardTitle>Comments</CardTitle>
-          <CardDescription>
-            コメントを入力して送信すると、一覧に反映されます。
-          </CardDescription>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <form action={create} className="space-y-4">
-            <div className="space-y-2">
-              <Label htmlFor="comment">コメント</Label>
-              <Input
-                id="comment"
-                name="comment"
-                type="text"
-                placeholder="write a comment"
-                required
-                autoComplete="off"
-              />
-            </div>
-            <Button type="submit" className="w-full">
-              Submit
-            </Button>
-          </form>
+    <div className="px-4 py-6 max-w-xl mx-auto space-y-4">
+      <div className="flex items-center justify-between">
+        <h1 className="text-lg font-semibold">備品一覧</h1>
+        <span className="text-sm text-muted-foreground">{list.length} 件</span>
+      </div>
 
-          <Separator />
-
-          <section aria-labelledby="comments-heading">
-            <h2
-              id="comments-heading"
-              className="mb-3 text-sm font-medium text-muted-foreground"
+      {list.length === 0 ? (
+        <Card>
+          <CardContent className="py-12 text-center text-muted-foreground text-sm">
+            <p>備品が登録されていません。</p>
+            <Link
+              href="/equipment/new"
+              className="mt-3 inline-block text-primary font-medium hover:underline"
             >
-              登録済み（新しい順）
-            </h2>
-            {list.length === 0 ? (
-              <p className="text-sm text-muted-foreground">
-                まだコメントはありません。
-              </p>
-            ) : (
-              <ul className="flex flex-col gap-3">
-                {list.map((row) => (
-                  <li
-                    key={row.id}
-                    className="rounded-lg border border-border bg-muted/50 px-3 py-2.5"
-                  >
-                    <p className="text-sm text-foreground">{row.comment}</p>
-                    <p className="mt-1 text-xs text-muted-foreground">
-                      {row.createdAt.toLocaleString("ja-JP", {
-                        dateStyle: "short",
-                        timeStyle: "short",
-                      })}
-                    </p>
-                  </li>
-                ))}
-              </ul>
-            )}
-          </section>
-        </CardContent>
-      </Card>
+              最初の備品を追加する
+            </Link>
+          </CardContent>
+        </Card>
+      ) : (
+        <ul className="space-y-3">
+          {list.map((item) => (
+            <li key={item.id}>
+              <Link href={`/equipment/${item.id}`}>
+                <Card className="hover:shadow-md transition-shadow cursor-pointer">
+                  <CardContent className="py-4 px-4 flex items-center justify-between">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate">{item.name}</p>
+                      {item.category && (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {item.category}
+                        </p>
+                      )}
+                    </div>
+                    <span
+                      className={`ml-3 shrink-0 inline-flex items-center px-2.5 py-1 rounded-full text-xs font-medium ${
+                        item.status === "available"
+                          ? "bg-green-100 text-green-800"
+                          : "bg-red-100 text-red-800"
+                      }`}
+                    >
+                      {item.status === "available" ? "利用可能" : "貸出中"}
+                    </span>
+                  </CardContent>
+                </Card>
+              </Link>
+            </li>
+          ))}
+        </ul>
+      )}
     </div>
   );
 }
